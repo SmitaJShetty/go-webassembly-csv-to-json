@@ -1,0 +1,49 @@
+<html>
+    <head>
+        Webassembly demo
+    <script src="wasm_exec.js"></script>
+    <script>
+        const go=new Go();
+        WebAssembly.instantiateStreaming(fetch("fileprocessor.wasm"), go.importObject).then((result)=>{
+            go.run(result.instance);
+        });
+    </script> 
+   
+    </head>
+    <body>
+        <script>
+            function uploadFile(){
+                let fileObj = document.querySelector("input[type=file]");
+                
+                if (fileObj===null || fileObj.files===null || fileObj.files[0] ===null){
+                    console.error("file contents are empty"); return;
+                }
+
+                const files = fileObj.files;
+                const fileReader = new FileReader();
+                fileReader.readAsText(files[0]);
+
+                fileReader.onload = function() {
+                    const fileContents = fileReader.result; 
+                    const data = Process(fileContents);
+                    console.log("output:", data);
+                    const outputCntrl = document.getElementById("output");
+                    outputCntrl.innerText=data;
+                }
+
+                fileReader.onerror = function(){
+                   console.log("err:", fileReader.error);
+               }
+            }
+        </script>
+       <label htmlFor="uploadfile" >Upload file: </label> 
+           <input type="file" accept=".csv"/> 
+            <input type="button" id="uploadfile" onclick="uploadFile()" value="Upload" />
+            <div id="output" style="display: inline-block;width: 90%; height: 600px; margin: 20px; overflow: scroll;" >
+                <pre>
+
+                </pre>
+            </div>
+           
+    <body>
+</html>
