@@ -27,6 +27,7 @@ func createConstructFromJSON(dataArray []byte) (map[string](map[string]interface
 
 func generateJSONFromCSV(fileContents string) (string, error) {
 	//split up into header and body
+	
 	fileRows := strings.Split(fileContents, "\n")
 	if len(fileRows) == 1 {
 		return "", fmt.Errorf("no data in file")
@@ -38,36 +39,34 @@ func generateJSONFromCSV(fileContents string) (string, error) {
 
 	//generate json from body
 	var fileJSONArr bytes.Buffer
-	fileJSONArr.WriteString("[")
-
+	fileJSONArr.WriteString(`[`)
+	
 	for _, row := range body {
 		rowItems := strings.Split(row, `,`)
-		rJSON := getRowJSON(rowItems, headerItems)
-		fileJSONArr.WriteString(rJSON)
+		fileJSONArr.WriteString(`{`)
+
+		for i := 0; i < len(headerItems) && i< len(rowItems); i++ {
+			s := `"` + strings.Replace(headerItems[i],`"`,`\"`,-1) + `":"` + strings.Replace(rowItems[i],`"`,`\"`,-1) + `",`
+			fileJSONArr.WriteString(s)
+		}
+	
+		fileJSONArr.WriteString(`},`)
 	}
-
-	fileJSONArr.WriteString("]")
-	return fileJSONArr.String(), nil
-}
-
-func getRowJSON(rowItems []string, headerItems []string) string {
-	var rowJSON []string
-
-	rowJSON = append(rowJSON, `{`)
-	for i := 0; i < len(headerItems); i++ {
-		s := `"` + headerItems[i] + `":"` + rowItems[i] + `",`
-		rowJSON = append(rowJSON, s)
-	}
-
-	rowJSON = append(rowJSON, `},`)
-	return strings.Join(rowJSON, ` `)
+	
+	fileJSONArr.WriteString(`]`)
+	formattedStr:= strings.Replace(fileJSONArr.String(), ",}", "}",-1)
+	formattedStr= strings.Replace(formattedStr, ",]", "]",-1)
+	formattedStr= strings.Replace(formattedStr, "\t", "     ",-1)
+	formattedStr= strings.Replace(formattedStr, "\r", "",-1) //TODO: figure out why a newline is added after every row and remove this statement
+	fmt.Println("4")
+	return formattedStr, nil
 }
 
 //createJSON marshalident the array
 func createJSON(c string) ([]byte, error) {
 	//var indentedJSON bytes.Buffer
 	dataBytes := json.RawMessage(c)
-	data, err := json.MarshalIndent(dataBytes, " 	", "\t")
+	data, err := json.MarshalIndent(dataBytes, " ", "\t")
 	if err != nil {
 		fmt.Println("err while indenting:", err)
 		return nil, err
